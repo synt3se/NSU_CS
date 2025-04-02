@@ -1,5 +1,6 @@
 #include "file_process.h"
 #include "utils.h"
+#include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
