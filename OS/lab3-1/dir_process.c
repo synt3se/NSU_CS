@@ -1,6 +1,7 @@
 #include "dir_process.h"
 #include "file_process.h"
 #include "utils.h"
+#include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
 
