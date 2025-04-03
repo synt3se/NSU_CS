@@ -32,8 +32,6 @@ int get_file_type(char* path, mode_t* file_type) {
     return EXIT_SUCCESS;
 }
 
-int copy_reverse_dir(const char* src_dir, const char* dest_dir);
-
 int process_entry(const char* src_path, const char* dest_path, const char* entry_name) {
     char entry_src_path[PATH_MAX];
     char entry_dest_path[PATH_MAX];
