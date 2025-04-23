@@ -8,6 +8,5 @@
 #define MAX_ERROR_MSG 256
 
 void print_error(const char* context, const char* path);
-void safe_close(FILE** file);
 void reverse_string(char* str, size_t len);
 

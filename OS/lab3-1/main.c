@@ -10,11 +10,11 @@ int main(int argc, char** argv) {
     const char* src_rel_path = argv[1];
     char dest_dir_path[PATH_MAX];
 
-    int status = get_dest_dir(src_rel_path, dest_dir_path);
-    if (status != EXIT_SUCCESS) {
-        return status;
+    int return_code = get_root_dest_dir(src_rel_path, dest_dir_path);
+    if (return_code == EXIT_FAILURE) {
+        return EXIT_FAILURE;
     }
 
-    status = copy_reverse_dir(src_rel_path, dest_dir_path);
-    return status;
+    return_code = copy_reverse_dir(src_rel_path, dest_dir_path);
+    return return_code;
 }

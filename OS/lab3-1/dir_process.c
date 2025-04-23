@@ -24,7 +24,7 @@ int init_entry_paths(const char* src, const char* dest, const char* entry_name, 
 
 int get_file_type(char* path, mode_t* file_type) {
     struct stat stat_buf;
-    if (lstat(path, &stat_buf) != 0) {
+    if (lstat(path, &stat_buf) == -1) {
         print_error("Error getting file status", path);
         return EXIT_FAILURE;
     }
@@ -35,67 +35,67 @@ int get_file_type(char* path, mode_t* file_type) {
 int process_entry(const char* src_path, const char* dest_path, const char* entry_name) {
     char entry_src_path[PATH_MAX];
     char entry_dest_path[PATH_MAX];
-    int status = init_entry_paths(src_path, dest_path, entry_name, entry_src_path, entry_dest_path);
-    if (status != EXIT_SUCCESS) {
+    int return_code = init_entry_paths(src_path, dest_path, entry_name, entry_src_path, entry_dest_path);
+    if (return_code == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
 
     mode_t file_type;
-    status = get_file_type(entry_src_path, &file_type);
-    if (status != EXIT_SUCCESS) {
+    return_code = get_file_type(entry_src_path, &file_type);
+    if (return_code == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
     if (S_ISDIR(file_type)) {
-        status = copy_reverse_dir(entry_src_path, entry_dest_path);
+        return_code = copy_reverse_dir(entry_src_path, entry_dest_path);
     }
     if (S_ISREG(file_type)) {
-        status = copy_reverse_file(entry_src_path, entry_dest_path);
+        return_code = copy_reverse_file(entry_src_path, entry_dest_path);
     }
-    return status;
+    return return_code;
 }
 
 int create_directory(const char* path, const char* src) {
     struct stat src_stat;
-    if (stat(src, &src_stat) != 0) {
+    if (stat(src, &src_stat) == -1) {
         print_error("Error getting source directory info", src);
         return EXIT_FAILURE;
     }
-    if (mkdir(path, src_stat.st_mode) != 0) {
+    if (mkdir(path, src_stat.st_mode) == -1) {
         print_error("Error creating directory", path);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }
 
-int copy_reverse_dir(const char* src_dir, const char* dest_dir) {
-    int status = create_directory(dest_dir, src_dir);
-    if (status != EXIT_SUCCESS) {
+int copy_reverse_dir(const char* src_path, const char* dest_path) {
+    int return_code = create_directory(dest_path, src_path);
+    if (return_code == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
 
-    DIR* dir = opendir(src_dir);
-    if (dir == NULL) {
-        print_error("Failed to open directory", src_dir);
+    DIR* src_dir = opendir(src_path);
+    if (src_dir == NULL) {
+        print_error("Failed to open directory", src_path);
         return EXIT_FAILURE;
     }
 
-    struct dirent* dir_entry = readdir(dir);
+    struct dirent* dir_entry = readdir(src_dir);
     while (dir_entry != NULL) {
         if (strcmp(dir_entry->d_name, ".") == 0 || strcmp(dir_entry->d_name, "..") == 0) {
-            dir_entry = readdir(dir);
+            dir_entry = readdir(src_dir);
             continue;
         }
-        status = process_entry(src_dir, dest_dir, dir_entry->d_name);
-        if (status != EXIT_SUCCESS)
+        return_code = process_entry(src_path, dest_path, dir_entry->d_name);
+        if (return_code == EXIT_FAILURE)
             break;
-        dir_entry = readdir(dir);
+        dir_entry = readdir(src_dir);
     }
 
-    closedir(dir);
-    return status;
+    closedir(src_dir);
+    return return_code;
 }
 
-int get_dest_dir(const char* relative_src_path, char* dest_path) {
+int get_root_dest_dir(const char* relative_src_path, char* dest_path) {
     char absolute_src_path[PATH_MAX];
     char* resolved_path = realpath(relative_src_path, absolute_src_path);
     if (resolved_path == NULL) {
