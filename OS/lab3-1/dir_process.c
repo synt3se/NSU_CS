@@ -4,20 +4,30 @@
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-int init_entry_paths(const char* src, const char* dest, const char* entry_name, char* e_src_path, char* e_dest_path) {
-    int len = snprintf(e_src_path, PATH_MAX, "%s/%s", src, entry_name);
+int build_path(const char* left_part, const char* right_part, char* out_path) {
+    int len = snprintf(out_path, PATH_MAX, "%s/%s", left_part, right_part);
     if (len < 0 || len >= PATH_MAX) {
-        fprintf(stderr, "Path construction error for: %s/%s\n", src, entry_name);
+        fprintf(stderr, "Path construction error for: %s/%s\n", left_part, right_part);
         return EXIT_FAILURE;
     }
-    len = snprintf(e_dest_path, PATH_MAX, "%s/%s", dest, entry_name);
-    if (len < 0 || len >= PATH_MAX) {
-        fprintf(stderr, "Path construction error for: %s/%s\n", dest, entry_name);
+    return EXIT_SUCCESS;
+}
+
+int init_entry_paths(const char* src, const char* dest, const char* entry_name,
+                        char* entry_src_path, char* entry_dest_path) {
+    int return_code = build_path(src, entry_name, entry_src_path);
+    if (return_code == EXIT_FAILURE) {
+        return EXIT_FAILURE;
+    }
+    return_code = build_path(dest, entry_name, entry_dest_path);
+    if (return_code == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
 
-    char* path_to_reverse = e_dest_path + strlen(dest) + 1;
+    char* path_to_reverse = entry_dest_path + strlen(dest) + 1;
     reverse_string(path_to_reverse, strlen(path_to_reverse));
     return EXIT_SUCCESS;
 }
@@ -60,11 +70,16 @@ int create_directory(const char* path, const char* src) {
         print_error("Error getting source directory info", src);
         return EXIT_FAILURE;
     }
+
     if (mkdir(path, src_stat.st_mode) == -1) {
         print_error("Error creating directory", path);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
+}
+
+bool is_service_entry(const char* entry_name) {
+    return strcmp(entry_name, ".") == 0 || strcmp(entry_name, "..") == 0;
 }
 
 int copy_reverse_dir(const char* src_path, const char* dest_path) {
@@ -81,7 +96,7 @@ int copy_reverse_dir(const char* src_path, const char* dest_path) {
 
     struct dirent* dir_entry = readdir(src_dir);
     while (dir_entry != NULL) {
-        if (strcmp(dir_entry->d_name, ".") == 0 || strcmp(dir_entry->d_name, "..") == 0) {
+        if (is_service_entry(dir_entry->d_name)) {
             dir_entry = readdir(src_dir);
             continue;
         }
@@ -95,24 +110,43 @@ int copy_reverse_dir(const char* src_path, const char* dest_path) {
     return return_code;
 }
 
-int get_root_dest_dir(const char* relative_src_path, char* dest_path) {
-    char absolute_src_path[PATH_MAX];
-    char* resolved_path = realpath(relative_src_path, absolute_src_path);
+int get_realpath(const char* relative_path, char* full_path) {
+    char* resolved_path = realpath(relative_path, full_path);
     if (resolved_path == NULL) {
-        print_error("Error resolving path", relative_src_path);
+        print_error("Error resolving path", relative_path);
         return EXIT_FAILURE;
     }
+    return EXIT_SUCCESS;
+}
 
-    char* base_name = strrchr(resolved_path, '/');
-    if (base_name == NULL) {
-        fprintf(stderr, "Invalid path: %s\n", resolved_path);
+int get_dir_name(const char* path, char* dir_name) {
+    path = strrchr(path, '/');
+    if (dir_name == NULL) {
+        fprintf(stderr, "Invalid path: %s\n", path);
         return EXIT_FAILURE;
     }
+    path = path + 1; // shift from '/'
+    memcpy(dir_name, path, strlen(path));
+    return EXIT_SUCCESS;
+}
 
-    size_t base_offset = base_name - resolved_path;
-    strncpy(dest_path, resolved_path, PATH_MAX);
+int get_full_dest_dir_path(const char *src_path, const char *dest_relative_path, char *out_full_dest_path) {
+    char reversed_src_dir_name[PATH_MAX];
+    int return_code = get_dir_name(src_path, reversed_src_dir_name);
+    if (return_code == EXIT_FAILURE) {
+        return EXIT_FAILURE;
+    }
+    size_t name_len = strlen(reversed_src_dir_name);
+    reverse_string(reversed_src_dir_name, name_len);
 
-    char* path_to_reverse = dest_path + base_offset + 1;
-    reverse_string(path_to_reverse, strlen(path_to_reverse));
+    char full_dest_path[PATH_MAX];
+    if (realpath(dest_relative_path, full_dest_path) == NULL) {
+        perror("Error resolving destination path");
+        return EXIT_FAILURE;
+    }
+    return_code = build_path(full_dest_path, reversed_src_dir_name, out_full_dest_path);
+    if (return_code == EXIT_FAILURE) {
+        return EXIT_FAILURE;
+    }
     return EXIT_SUCCESS;
 }
