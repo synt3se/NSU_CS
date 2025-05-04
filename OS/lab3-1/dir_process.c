@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 int build_path(const char* left_part, const char* right_part, char* out_path) {
     int len = snprintf(out_path, PATH_MAX, "%s/%s", left_part, right_part);
@@ -34,7 +35,8 @@ int init_entry_paths(const char* src, const char* dest, const char* entry_name,
 
 int get_file_type(char* path, mode_t* file_type) {
     struct stat stat_buf;
-    if (lstat(path, &stat_buf) == -1) {
+    int return_code = lstat(path, &stat_buf);
+    if (return_code == -1) {
         print_error("Error getting file status", path);
         return EXIT_FAILURE;
     }
@@ -66,19 +68,20 @@ int process_entry(const char* src_path, const char* dest_path, const char* entry
 
 int create_directory(const char* path, const char* src) {
     struct stat src_stat;
-    if (stat(src, &src_stat) == -1) {
+    int return_code = stat(src, &src_stat);
+    if (return_code == -1) {
         print_error("Error getting source directory info", src);
         return EXIT_FAILURE;
     }
-
-    if (mkdir(path, src_stat.st_mode) == -1) {
+    return_code = mkdir(path, src_stat.st_mode);
+    if (return_code == -1) {
         print_error("Error creating directory", path);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }
 
-bool is_service_entry(const char* entry_name) {
+inline bool is_service_entry(const char* entry_name) {
     return strcmp(entry_name, ".") == 0 || strcmp(entry_name, "..") == 0;
 }
 
@@ -94,16 +97,16 @@ int copy_reverse_dir(const char* src_path, const char* dest_path) {
         return EXIT_FAILURE;
     }
 
-    struct dirent* dir_entry = readdir(src_dir);
-    while (dir_entry != NULL) {
-        if (is_service_entry(dir_entry->d_name)) {
-            dir_entry = readdir(src_dir);
+    struct dirent* curr_dir_entry = readdir(src_dir);
+    while (curr_dir_entry != NULL) {
+        if (is_service_entry(curr_dir_entry->d_name)) {
+            curr_dir_entry = readdir(src_dir);
             continue;
         }
-        return_code = process_entry(src_path, dest_path, dir_entry->d_name);
+        return_code = process_entry(src_path, dest_path, curr_dir_entry->d_name);
         if (return_code == EXIT_FAILURE)
             break;
-        dir_entry = readdir(src_dir);
+        curr_dir_entry = readdir(src_dir);
     }
 
     closedir(src_dir);
@@ -139,12 +142,13 @@ int get_full_dest_dir_path(const char *src_path, const char *dest_relative_path,
     size_t name_len = strlen(reversed_src_dir_name);
     reverse_string(reversed_src_dir_name, name_len);
 
-    char full_dest_path[PATH_MAX];
-    if (realpath(dest_relative_path, full_dest_path) == NULL) {
+    char real_dest_path[PATH_MAX];
+    char* resolved_path = realpath(dest_relative_path, real_dest_path);
+    if (resolved_path == NULL) {
         perror("Error resolving destination path");
         return EXIT_FAILURE;
     }
-    return_code = build_path(full_dest_path, reversed_src_dir_name, out_full_dest_path);
+    return_code = build_path(real_dest_path, reversed_src_dir_name, out_full_dest_path);
     if (return_code == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }

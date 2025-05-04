@@ -29,7 +29,7 @@ int write_chunk(FILE* dest_file, const char* buffer, size_t chunk, size_t* total
 }
 
 int process_chunk(FILE* src_file, FILE* dest_file, size_t offset, size_t chunk,
-    const char* src_name, const char* dest_name) {
+                    const char* src_name, const char* dest_name) {
     if (fseek(src_file, (long)offset, SEEK_SET) == -1) {
         print_error("Error seeking in file", src_name);
         return EXIT_FAILURE;
