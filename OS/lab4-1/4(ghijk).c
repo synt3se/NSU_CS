@@ -10,7 +10,7 @@ int environment_test() {
 
     char* new_var_value = getenv("NEW_VAR");
     if (new_var_value == NULL) {
-        perror("Error geting env variable");
+        perror("Error getting env variable");
         return EXIT_FAILURE;
     }
     printf("NEW_VAR = %s\n", new_var_value);
