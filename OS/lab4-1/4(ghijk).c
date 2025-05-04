@@ -1,13 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void environment_test() {
+int environment_test() {
     int return_code = setenv("NEW_VAR", "initial", 1);
     if (return_code == -1) {
         perror("Error setenv");
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
-    printf("NEW_VAR = %s\n", getenv("NEW_VAR"));
+
+    char* new_var_value = getenv("NEW_VAR");
+    if (new_var_value == NULL) {
+        perror("Error geting env variable");
+        return EXIT_FAILURE;
+    }
+    printf("NEW_VAR = %s\n", new_var_value);
+
     return_code = setenv("NEW_VAR", "changed", 1);
     if (return_code == -1) {
         perror("Error setenv changing");
@@ -17,6 +24,9 @@ void environment_test() {
 }
 
 int main(void) {
-    environment_test();
-    return 0;
+    int return_code = environment_test();
+    if (return_code == EXIT_FAILURE) {
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
 }

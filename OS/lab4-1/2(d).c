@@ -3,6 +3,8 @@
 int* return_local_address() {
     int local = 13;
     int* local_p = &local;
+    printf("Address of a local variable in function: %p\n", (void*)local_p);
+    printf("Variable value in function: %d\n", *local_p);
     return local_p;
 }
 

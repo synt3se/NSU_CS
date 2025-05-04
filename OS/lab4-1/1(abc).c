@@ -22,7 +22,7 @@ void print_addresses() {
 int main(void) {
     print_addresses();
     printf("\nPID: %d\n", getpid());
-    printf("Write any character to continue.\n");
+    printf("Write any character to continue: ");
     getchar();
     return 0;
 }
