@@ -21,7 +21,7 @@ void print_addresses() {
 
 int main(void) {
     print_addresses();
-    int process_pid = getpid();
+    pid_t process_pid = getpid();
     printf("\nPID: %d\n", process_pid);
     printf("Write any character to continue: ");
     getchar();
