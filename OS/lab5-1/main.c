@@ -15,24 +15,24 @@ void process_child(int* local_var) {
 
     printf("  PID: %d, Parent PID: %d\n", pid, ppid);
     printf("  [Child] g_var - address: %p, value: %d\n", (void*)&g_var, g_var);
-    printf("  [Child] local_var - address: %p, value: %d\n", (void*)&local_var, *local_var);
+    printf("  [Child] local_var - address: %p, value: %d\n", (void*)local_var, *local_var);
     getchar();
 
     g_var = 0;
     *local_var = 1;
     printf("  [Child] Modified g_var - address: %p, value: %d\n", (void*)&g_var, g_var);
-    printf("  [Child] Modified local_var - address: %p, value: %d\n", (void*)&local_var, *local_var);
+    printf("  [Child] Modified local_var - address: %p, value: %d\n", (void*)local_var, *local_var);
     getchar();
 }
 
 void process_parent(int* local_var) {
     printf("[Parent after fork] g_var - address: %p, value: %d\n", (void*)&g_var, g_var);
-    printf("[Parent after fork] local_var - address: %p, value: %d\n", (void*)&local_var, *local_var);
+    printf("[Parent after fork] local_var - address: %p, value: %d\n", (void*)local_var, *local_var);
 
     sleep(30);
 
     printf("[Parent after sleep] g_var - address: %p, value: %d\n", (void*)&g_var, g_var);
-    printf("[Parent after sleep] local_var - address: %p, value: %d\n", (void*)&local_var, *local_var);
+    printf("[Parent after sleep] local_var - address: %p, value: %d\n", (void*)local_var, *local_var);
 
     int status;
     pid_t wait_pid = wait(&status);
@@ -41,7 +41,7 @@ void process_parent(int* local_var) {
         exit(EXIT_FAILURE);
     }
     printf("[Parent after wait] g_var - address: %p, value: %d\n", (void*)&g_var, g_var);
-    printf("[Parent after wait] local_var - address: %p, value: %d\n", (void*)&local_var, *local_var);
+    printf("[Parent after wait] local_var - address: %p, value: %d\n", (void*)local_var, *local_var);
 
     if (WIFEXITED(status)) {
         int exit_status = WEXITSTATUS(status);
