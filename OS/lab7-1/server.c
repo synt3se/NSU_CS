@@ -17,7 +17,7 @@ int init_server(int socket_fd) {
     server_addr.sin_port = htons(PORT);
 
     int return_code = bind(socket_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
-    if (return_code < 0) {
+    if (return_code == -1) {
         perror("bind");
         return EXIT_FAILURE;
     }
@@ -45,7 +45,7 @@ void run_server(int socket_fd) {
         printf("Received from %s:%d - %s\n", client_ip, client_port, buffer);
 
         ssize_t bytes_sent = sendto(socket_fd, buffer, bytes_recvd, NOFLAGS, (struct sockaddr*)&client_addr, recv_len);
-        if (bytes_sent < 0) {
+        if (bytes_sent == -1) {
             perror("sendto");
             continue;
         }
@@ -54,8 +54,8 @@ void run_server(int socket_fd) {
 }
 
 int main(void) {
-    int socket_fd = socket(IPV4, SOCK_DGRAM, 0);
-    if (socket_fd < 0) {
+    int socket_fd = socket(IPV4, SOCK_DGRAM, IPPROTO_UDP);
+    if (socket_fd == -1) {
         perror("socket");
         return EXIT_FAILURE;
     }
