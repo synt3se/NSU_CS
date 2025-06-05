@@ -23,7 +23,7 @@ int set_recv_timer(int socket_fd) {
     return EXIT_SUCCESS;
 }
 
-int init_client_address(struct sockaddr_in *server_addr) {
+int init_server_address(struct sockaddr_in *server_addr) {
     memset(server_addr, 0, sizeof(*server_addr));
     server_addr->sin_family = IPV4;
     server_addr->sin_port = htons(PORT);
@@ -79,7 +79,7 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
-    return_code = init_client_address(&server_addr);
+    return_code = init_server_address(&server_addr);
     if (return_code == EXIT_FAILURE) {
         close(socket_fd);
         return EXIT_FAILURE;
